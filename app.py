@@ -1,4 +1,5 @@
 import pygame
+import pyperclip
 import urllib.request, io
 from pytube import YouTube
 
@@ -12,14 +13,14 @@ class App:
         self.basefont = pygame.font.SysFont('Arial', 30, bold=True)
         self.subfont = pygame.font.SysFont('Arial', 20, bold=True)
         self.screen = pygame.display.set_mode((800, 800))
-        self.screen.fill((255, 255, 255))
+        self.screen.fill(pygame.Color('lightsteelblue4'))
         self.Thumbnail_Size = (700, 400)
-        self.link = 'https://www.youtube.com/watch?v=vFrvFKOVU6A'
-        self.yt = YouTube(self.link)
-        self.user_link = self.link
+        self.link = ''  # https://www.youtube.com/watch?v=vFrvFKOVU6A'
+        self.yt = ''  # YouTube(self.link)
+        self.user_link = ' '  # self.link
         self.user_location = "C:\\Users\\Kevin\\Desktop"
-        self.input_link = pygame.Rect(108, 20, 600, 32)
-        self.input_location = pygame.Rect(290, 70, 418, 32)
+        self.input_link = pygame.Rect(108, 20, 600, 35)
+        self.input_location = pygame.Rect(290, 70, 418, 35)
         self.active_link = False
         self.active_location = False
         self.DL18 = pygame.Rect(170, 650, 100, 32)
@@ -35,8 +36,14 @@ class App:
         self.enabled_DL22 = False
         self.enabled_DL140 = False
         self.enabled_DL251 = False
+        self.text = ''
         self.vecounter = 0
         self.aucounter = 0
+
+
+    def Program(self):
+        self.link= self.user_link
+        self.yt = YouTube(self.link)
         self.url = self.yt.thumbnail_url
         print(self.yt.streams.filter(progressive=True))
         print(self.yt.streams.filter(only_audio=True))
@@ -93,14 +100,6 @@ class App:
         else:
             print("Missing possible audios")
 
-        # ("360p MP4")18
-        # ("720p MP4") 22
-        # ("128kbps MP4A") 140
-        # ("160kbps webm") 251
-        # display url at the top and allow copy and paste for new video
-        # add a looper
-        # make it look cleaner
-        # done
         img = io.BytesIO(r)
         image = pygame.image.load(img).convert()
         image = pygame.transform.scale(image, self.Thumbnail_Size)
@@ -116,20 +115,21 @@ class App:
         self.textsurface = self.titlefont.render(title, True, (0, 0, 0))
         print(self.titlex)
         print(self.fontsize)
-        DLtext = self.basefont.render(f"Download Location:", True, (pygame.Color("black")))
-        URLtxt = self.basefont.render(f"URL:", True, (pygame.Color("black")))
+
         self.screen.blit(self.textsurface, (self.titlex, 550))
-        self.screen.blit(DLtext, (50, 70))
-        self.screen.blit(URLtxt, (48, 20))
         self.screen.blit(self.videotitle, (100, 600))
         self.screen.blit(self.audiotitle, (550, 600))
         pygame.display.flip()
 
     def menu(self):
-        color = pygame.Color('grey37')
-        color_active = pygame.Color('grey100')
-        color2 = pygame.Color('grey37')
-        color_active2 = pygame.Color('grey100')
+        DLtext = self.basefont.render(f"Download Location:", True, (pygame.Color("black")))
+        URLtxt = self.basefont.render(f"URL:", True, (pygame.Color("black")))
+        self.screen.blit(DLtext, (50, 70))
+        self.screen.blit(URLtxt, (48, 20))
+        color = pygame.Color('deepskyblue4')
+        color_active = pygame.Color('cadetblue1')
+        color2 = pygame.Color('deepskyblue4')
+        color_active2 = pygame.Color('cadetblue1')
         if self.active_link:
             color = color_active
         if self.active_location:
@@ -141,6 +141,14 @@ class App:
         self.screen.blit(text_surface, self.input_link)
         self.screen.blit(text_surface2, self.input_location)
         pygame.display.flip()
+
+
+    def Paste(self):
+        self.text = pyperclip.paste()
+        lines = self.text.split("\n")
+        for line in range(len(lines)):
+            lines[line] = '*' + lines[line]
+        pyperclip.copy(self.text)
 
     def redraw(self):
         self.screen.fill((255, 255, 255))
@@ -160,7 +168,21 @@ class App:
 
                 if event.type == pygame.KEYDOWN:
                     if self.active_link:
-                        if event.key == pygame.K_BACKSPACE:
+                        if event.key == pygame.K_v:
+                            mods = pygame.key.get_mods()
+                            if mods & pygame.KMOD_CTRL:
+                                self.Paste()
+                                self.user_link = self.text
+                                self.text = ''
+                        elif event.key == pygame.K_RETURN:
+                            self.screen.fill(pygame.Color('lightsteelblue4'))
+                            self.enabled_DL18 = False
+                            self.enabled_DL22 = False
+                            self.enabled_DL140 = False
+                            self.enabled_DL251 = False
+                            self.titlex = 250
+                            self.Program()
+                        elif event.key == pygame.K_BACKSPACE:
                             self.user_link = self.user_link[:-1]
                         else:
                             self.user_link += event.unicode
@@ -172,47 +194,53 @@ class App:
 
                 if event.type == pygame.KEYDOWN:
                     if self.active_location:
+                        if event.key == pygame.K_v:
+                            mods = pygame.key.get_mods()
+                            if mods & pygame.KMOD_CTRL:
+                                self.Paste()
+                                self.user_location = self.text
+                                self.text = ''
                         if event.key == pygame.K_BACKSPACE:
                             self.user_location = self.user_location[:-1]
                         else:
                             self.user_location += event.unicode
-                DL = self.subfont.render(f"Download", False, (pygame.Color("White")))
+                DL = self.subfont.render(f"Download", True, (pygame.Color("black")))
                 if self.enabled_DL18:
                     lineDL18 = self.subfont.render(f"360p MP4", True, (pygame.Color("black")))
                     self.screen.blit(lineDL18, (80, 653))
                     if self.DL18.collidepoint(mouse):
-                        pygame.draw.rect(self.screen, (170, 170, 170), self.DL18)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue3'), self.DL18)
                         self.screen.blit(DL, (180, 653))
                     else:
-                        pygame.draw.rect(self.screen, (100, 100, 100), self.DL18)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue4'), self.DL18)
                         self.screen.blit(DL, (180, 653))
                 if self.enabled_DL22:
                     lineDL22 = self.subfont.render(f"720p MP4", True, (pygame.Color("black")))
                     self.screen.blit(lineDL22, (80, 700))
                     if self.DL22.collidepoint(mouse):
-                        pygame.draw.rect(self.screen, (170, 170, 170), self.DL22)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue3'), self.DL22)
                         self.screen.blit(DL, (180, 703))
                     else:
-                        pygame.draw.rect(self.screen, (100, 100, 100), self.DL22)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue4'), self.DL22)
                         self.screen.blit(DL, (180, 703))
 
                 if self.enabled_DL140:
                     lineDL140 = self.subfont.render(f"128kbps MP4A", True, (pygame.Color("black")))
                     self.screen.blit(lineDL140, (500, 653))
                     if self.DL140.collidepoint(mouse):
-                        pygame.draw.rect(self.screen, (170, 170, 170), self.DL140)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue3'), self.DL140)
                         self.screen.blit(DL, (630, 653))
                     else:
-                        pygame.draw.rect(self.screen, (100, 100, 100), self.DL140)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue4'), self.DL140)
                         self.screen.blit(DL, (630, 653))
                 if self.enabled_DL251:
                     lineDL251 = self.subfont.render(f"160kbps WEBM", True, (pygame.Color("black")))
                     self.screen.blit(lineDL251, (495, 703))
                     if self.DL251.collidepoint(mouse):
-                        pygame.draw.rect(self.screen, (170, 170, 170), self.DL251)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue3'), self.DL251)
                         self.screen.blit(DL, (630, 703))
                     else:
-                        pygame.draw.rect(self.screen, (100, 100, 100), self.DL251)
+                        pygame.draw.rect(self.screen, pygame.Color('deepskyblue4'), self.DL251)
                         self.screen.blit(DL, (630, 703))
 
                 if event.type == pygame.QUIT:
